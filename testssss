@@ -1,60 +1,73 @@
--- BYPASS LEVE
-local function lightweight_bypass()
-    local successCount = 0
-    local totalModules = 3 -- módulos ativos nesta versão leve
+-- ===============================
+--  Light & Safe Bypass
+-- ===============================
 
-    local function notify(msg)
-        pcall(function()
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "🔰 Ascended Hub Bypass",
-                Text = msg,
-                Duration = 5
-            })
-        end)
-    end
+local successCount = 0
+local totalModules = 3 -- Teleports, Auto-Farm, FireClickDetector
 
-    local function activate(name, func)
-        local ok, err = pcall(func)
-        if ok then
-            successCount += 1
-            notify("✅ "..name.." ativado!")
-        else
-            warn("[Bypass] Falhou em: "..name.." | "..tostring(err))
-        end
-    end
-
-    -- Módulos leves
-    activate("Filter Logs", function()
-        local logService = game:GetService("LogService")
-        logService.MessageOut:Connect(function(msg)
-            -- filtra apenas mensagens críticas de cheat
-            local blocked = {"Cheat", "Exploit", "Hack", "Script", "Inject"}
-            for _, pattern in ipairs(blocked) do
-                if type(msg) == "string" and msg:lower():find(pattern:lower()) then
-                    return
-                end
-            end
-        end)
+local function notify(msg)
+    pcall(function()
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "🔰 Ascended Hub Bypass",
+            Text = msg,
+            Duration = 5
+        })
     end)
-
-    activate("Mask Executor", function()
-        getgenv().identifyexecutor = function()
-            local fake = {"Roblox Studio", "Roblox Player", "RobloxApp"}
-            return fake[math.random(1, #fake)]
-        end
-    end)
-
-    activate("Simulate Latency", function()
-        local origTick = tick
-        getgenv().tick = function()
-            return origTick() + math.random(50,100)/1000
-        end
-    end)
-
-    -- Resultado final
-    local percent = math.floor((successCount / totalModules) * 100)
-    notify("✨ Bypass concluído ("..percent.."% eficácia)")
 end
 
--- Executa
-lightweight_bypass()
+local function safeActivate(name, func)
+    local ok, err = pcall(func)
+    if ok then
+        successCount += 1
+        notify("✅ " .. name .. " ativado!")
+    else
+        warn("[Bypass] Falhou em: " .. name .. " | " .. tostring(err))
+    end
+end
+
+-- === 1. Teleports seguros ===
+safeActivate("Teleports Seguros", function()
+    local TweenService = game:GetService("TweenService")
+    local player = game.Players.LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    getgenv().safeTeleport = function(destCFrame)
+        -- Movimentos suaves em Tween
+        local tween = TweenService:Create(hrp, TweenInfo.new(0.3, Enum.EasingStyle.Linear), {CFrame = destCFrame})
+        tween:Play()
+        tween.Completed:Wait()
+        task.wait(math.random(10, 30)/100) -- micro-delay aleatório
+    end
+end)
+
+-- === 2. Auto-Farm seguro ===
+safeActivate("Auto-Farm Seguro", function()
+    getgenv().safeFarm = function(clickFunc)
+        -- Evita clicks em excesso
+        local maxPerSecond = 5
+        local lastClick = 0
+        return function(...)
+            local now = tick()
+            if now - lastClick >= 1 / maxPerSecond then
+                lastClick = now
+                pcall(clickFunc, ...)
+            end
+        end
+    end
+end)
+
+-- === 3. FireClickDetector seguro ===
+safeActivate("FireClickDetector Seguro", function()
+    getgenv().safeFireClickDetector = function(detector)
+        if detector and detector:IsA("ClickDetector") then
+            pcall(function()
+                detector:FireClick(game.Players.LocalPlayer)
+            end)
+        end
+    end
+end)
+
+-- === Resultado final ===
+local percent = math.floor((successCount / totalModules) * 100)
+notify("✨ Bypass concluído (" .. percent .. "% eficácia)")
