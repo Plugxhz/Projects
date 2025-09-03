@@ -1,0 +1,60 @@
+-- BYPASS LEVE
+local function lightweight_bypass()
+    local successCount = 0
+    local totalModules = 3 -- módulos ativos nesta versão leve
+
+    local function notify(msg)
+        pcall(function()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "🔰 Ascended Hub Bypass",
+                Text = msg,
+                Duration = 5
+            })
+        end)
+    end
+
+    local function activate(name, func)
+        local ok, err = pcall(func)
+        if ok then
+            successCount += 1
+            notify("✅ "..name.." ativado!")
+        else
+            warn("[Bypass] Falhou em: "..name.." | "..tostring(err))
+        end
+    end
+
+    -- Módulos leves
+    activate("Filter Logs", function()
+        local logService = game:GetService("LogService")
+        logService.MessageOut:Connect(function(msg)
+            -- filtra apenas mensagens críticas de cheat
+            local blocked = {"Cheat", "Exploit", "Hack", "Script", "Inject"}
+            for _, pattern in ipairs(blocked) do
+                if type(msg) == "string" and msg:lower():find(pattern:lower()) then
+                    return
+                end
+            end
+        end)
+    end)
+
+    activate("Mask Executor", function()
+        getgenv().identifyexecutor = function()
+            local fake = {"Roblox Studio", "Roblox Player", "RobloxApp"}
+            return fake[math.random(1, #fake)]
+        end
+    end)
+
+    activate("Simulate Latency", function()
+        local origTick = tick
+        getgenv().tick = function()
+            return origTick() + math.random(50,100)/1000
+        end
+    end)
+
+    -- Resultado final
+    local percent = math.floor((successCount / totalModules) * 100)
+    notify("✨ Bypass concluído ("..percent.."% eficácia)")
+end
+
+-- Executa
+lightweight_bypass()
